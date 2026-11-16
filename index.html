@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PlinkBit - Level up your browser</title>
+    <meta name="description" content="PlinkBit: level up your browser. Play YOLO: tanks, maze, mayhem.">
+    <meta name="theme-color" content="#080a16">
+    <meta property="og:title" content="PlinkBit">
+    <meta property="og:description" content="Level up your browser. Play YOLO: tanks, maze, mayhem.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="yolo.png">
+    <link rel="icon" type="image/svg+xml" href="logo.svg">
+    <style>
+        :root {
+            --bg: #080a16;
+            --panel: #0f1226;
+            --ink: #eef1ff;
+            --muted: #9aa3c7;
+            --mint: #3df5c8;
+            --gold: #ffc93c;
+            --line: rgba(255, 255, 255, 0.1);
+            --round: ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+            --mono: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
+        }
+
+        * { box-sizing: border-box; }
+
+        html { -webkit-text-size-adjust: 100%; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background:
+                radial-gradient(60rem 36rem at 15% -10%, rgba(61, 245, 200, 0.13), transparent 60%),
+                radial-gradient(50rem 34rem at 95% 8%, rgba(255, 201, 60, 0.10), transparent 60%),
+                var(--bg);
+            color: var(--ink);
+            font-family: var(--round);
+            line-height: 1.55;
+            overflow-x: hidden;
+        }
+
+        /* Falling bits, drawn by the script at the foot of the page */
+        #bits {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .wrap {
+            position: relative;
+            z-index: 1;
+            max-width: 68rem;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        /* ---------- Hero ---------- */
+
+        .hero {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: clamp(3rem, 9vh, 6.5rem) 0 clamp(2.5rem, 6vh, 4rem);
+        }
+
+        .mark {
+            width: clamp(5.5rem, 13vw, 8rem);
+            height: auto;
+            overflow: visible;
+            filter: drop-shadow(0 0 1.6rem rgba(61, 245, 200, 0.35));
+        }
+
+        .mark .bit {
+            transform-box: fill-box;
+            transform-origin: 50% 100%;
+            animation: drop 4.2s cubic-bezier(0.5, 0, 0.6, 1) infinite;
+        }
+
+        .mark .ring {
+            transform-box: fill-box;
+            transform-origin: 50% 50%;
+            animation: ring 4.2s ease-out infinite;
+        }
+
+        .mark .ring.far { animation-name: ring-far; }
+
+        @keyframes drop {
+            0%   { transform: translateY(-30px); opacity: 0; }
+            6%   { opacity: 1; }
+            20%  { transform: translateY(13px) scale(1, 1); }
+            24%  { transform: translateY(13px) scale(1.22, 0.72); }
+            34%  { transform: translateY(-4px) scale(0.96, 1.05); }
+            44%, 90% { transform: translateY(0) scale(1, 1); opacity: 1; }
+            100% { transform: translateY(0) scale(1, 1); opacity: 0; }
+        }
+
+        @keyframes ring {
+            0%, 21% { transform: scale(0.1); opacity: 0; }
+            26%     { opacity: 1; }
+            48%, 90% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.3); opacity: 0; }
+        }
+
+        @keyframes ring-far {
+            0%, 24% { transform: scale(0.1); opacity: 0; }
+            32%     { opacity: 0.8; }
+            58%, 90% { transform: scale(1); opacity: 0.5; }
+            100% { transform: scale(1.3); opacity: 0; }
+        }
+
+        h1 {
+            margin: 1.4rem 0 0;
+            font-size: clamp(3.4rem, 13vw, 7.5rem);
+            font-weight: 800;
+            letter-spacing: -0.045em;
+            line-height: 0.95;
+        }
+
+        /* "Bit" carries the colour, and a band of light crosses it now and then */
+        h1 .bit-word {
+            background: linear-gradient(100deg, var(--mint) 0%, var(--gold) 38%, #fff8dc 50%, var(--gold) 62%, var(--mint) 100%);
+            background-size: 250% 100%;
+            background-position: 100% 0;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: sheen 6s ease-in-out infinite;
+        }
+
+        @keyframes sheen {
+            0%, 55% { background-position: 100% 0; }
+            85%, 100% { background-position: 0% 0; }
+        }
+
+        .tagline {
+            margin: 1.3rem 0 0;
+            max-width: 32rem;
+            font-size: clamp(1.1rem, 2.4vw, 1.4rem);
+            color: var(--muted);
+        }
+
+        /* ---------- Featured game ---------- */
+
+        .label {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin: 0 0 1rem;
+            font-family: var(--mono);
+            font-size: 0.8rem;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: var(--mint);
+        }
+
+        .label::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(61, 245, 200, 0.5), transparent);
+        }
+
+        @property --turn {
+            syntax: "<angle>";
+            inherits: false;
+            initial-value: 0deg;
+        }
+
+        /* The border is a slow sweep of light around the card */
+        .card {
+            --turn: 0deg;
+            --mx: 50%;
+            --my: 0%;
+            position: relative;
+            display: grid;
+            grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+            border-radius: 1.5rem;
+            padding: 2px;
+            background: conic-gradient(from var(--turn), rgba(255, 255, 255, 0.08) 0deg, var(--mint) 70deg, rgba(255, 255, 255, 0.08) 140deg, rgba(255, 255, 255, 0.08) 200deg, var(--gold) 270deg, rgba(255, 255, 255, 0.08) 340deg);
+            animation: turn 9s linear infinite;
+            box-shadow: 0 2.5rem 6rem -2rem rgba(0, 0, 0, 0.9), 0 0 5rem -1.5rem rgba(61, 245, 200, 0.28);
+        }
+
+        @keyframes turn { to { --turn: 360deg; } }
+
+        .shot, .about { background: var(--panel); }
+
+        .shot {
+            position: relative;
+            display: block;
+            border-radius: calc(1.5rem - 2px) 0 0 calc(1.5rem - 2px);
+            overflow: hidden;
+            min-height: 100%;
+        }
+
+        .shot img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: 55% 50%;
+            transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+        }
+
+        .card:hover .shot img { transform: scale(1.045); }
+
+        /* Light that follows the pointer across the picture */
+        .shot::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(22rem circle at var(--mx) var(--my), rgba(255, 255, 255, 0.16), transparent 60%),
+                linear-gradient(90deg, transparent 88%, rgba(15, 18, 38, 0.7));
+            pointer-events: none;
+        }
+
+        .about {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: clamp(1.6rem, 4vw, 3rem);
+            border-radius: 0 calc(1.5rem - 2px) calc(1.5rem - 2px) 0;
+        }
+
+        .about h2 {
+            margin: 0;
+            font-family: var(--mono);
+            font-size: clamp(3rem, 7vw, 4.6rem);
+            font-weight: 800;
+            line-height: 1;
+            color: #2dff6a;
+            text-shadow: 0 0 1.6rem rgba(45, 255, 106, 0.45);
+        }
+
+        .about .hook {
+            margin: 0.7rem 0 0;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--gold);
+        }
+
+        .about p.pitch {
+            margin: 1rem 0 0;
+            color: #c9cfea;
+        }
+
+        .facts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin: 1.4rem 0 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .facts li {
+            padding: 0.3rem 0.75rem;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            color: var(--muted);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .play {
+            position: relative;
+            align-self: flex-start;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.7rem;
+            margin-top: 1.8rem;
+            padding: 0.95rem 1.7rem;
+            border-radius: 999px;
+            background: linear-gradient(180deg, #ffe08a, var(--gold) 55%, #f0a800);
+            color: #1a1300;
+            font-size: 1.15rem;
+            font-weight: 800;
+            text-decoration: none;
+            overflow: hidden;
+            box-shadow: 0 0.8rem 2.2rem -0.6rem rgba(255, 201, 60, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .play::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -60%;
+            width: 40%;
+            height: 100%;
+            background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.75), transparent);
+            transform: skewX(-20deg);
+            animation: glint 5s ease-in-out infinite;
+        }
+
+        @keyframes glint {
+            0%, 70% { left: -60%; }
+            100% { left: 130%; }
+        }
+
+        .play:hover { transform: translateY(-2px); box-shadow: 0 1.2rem 2.6rem -0.6rem rgba(255, 201, 60, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.7); }
+        .play:active { transform: translateY(0); }
+        .play svg { width: 1.1rem; height: 1.1rem; transition: transform 0.18s ease; }
+        .play:hover svg { transform: translateX(3px); }
+
+        a:focus-visible {
+            outline: 3px solid var(--mint);
+            outline-offset: 4px;
+        }
+
+        .credit {
+            margin: 1.2rem 0 0;
+            font-size: 0.82rem;
+            color: #7d86ab;
+        }
+
+        /* ---------- Footer ---------- */
+
+        footer {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 0.6rem 2rem;
+            margin-top: clamp(3rem, 8vh, 5rem);
+            padding: 1.6rem 0 2.4rem;
+            border-top: 1px solid var(--line);
+            font-size: 0.92rem;
+            color: var(--muted);
+        }
+
+        footer a {
+            color: var(--ink);
+            text-decoration: none;
+            border-bottom: 1px solid rgba(61, 245, 200, 0.5);
+        }
+
+        footer a:hover { color: var(--mint); }
+
+        /* ---------- Small screens: picture on top ---------- */
+
+        @media (max-width: 48rem) {
+            .card { grid-template-columns: 1fr; }
+            .shot { border-radius: calc(1.5rem - 2px) calc(1.5rem - 2px) 0 0; aspect-ratio: 16 / 10; }
+            .shot::after { background: linear-gradient(180deg, transparent 70%, rgba(15, 18, 38, 0.85)); }
+            .about { border-radius: 0 0 calc(1.5rem - 2px) calc(1.5rem - 2px); }
+            .play { align-self: stretch; justify-content: center; }
+            footer { flex-direction: column; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation: none !important; transition: none !important; }
+            h1 .bit-word { background-position: 50% 0; }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="bits" aria-hidden="true"></canvas>
+
+    <div class="wrap">
+        <header class="hero">
+            <svg class="mark" viewBox="0 0 64 64" aria-hidden="true">
+                <ellipse class="ring far" cx="32" cy="45" rx="22" ry="8" fill="none" stroke="#3df5c8" stroke-width="3"/>
+                <ellipse class="ring" cx="32" cy="45" rx="11" ry="4" fill="none" stroke="#3df5c8" stroke-width="3"/>
+                <rect class="bit" x="23" y="11" width="18" height="18" rx="4" fill="#ffc93c"/>
+            </svg>
+            <h1>Plink<span class="bit-word">Bit</span></h1>
+            <p class="tagline">Level up your browser.</p>
+        </header>
+
+        <main>
+            <p class="label">Featured game</p>
+            <section class="card" id="card" aria-labelledby="yolo-title">
+                <a class="shot" href="/yolo/" tabindex="-1" aria-hidden="true">
+                    <img src="yolo.png" width="570" height="490" alt="">
+                </a>
+                <div class="about">
+                    <h2 id="yolo-title">YOLO</h2>
+                    <p class="hook">Tanks. Maze. Mayhem.</p>
+                    <p class="pitch">One tank against a maze of enemy bases. Blast through the walls, take out the reactors, and reach the next sector before the fuel runs dry.</p>
+                    <ul class="facts">
+                        <li>Free</li>
+                        <li>Nothing to install</li>
+                        <li>Keyboard, controller or touch</li>
+                    </ul>
+                    <a class="play" href="/yolo/">
+                        Play YOLO
+                        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10h12M11 5l5 5-5 5"/></svg>
+                    </a>
+                    <p class="credit">Inspired by Bolo (1982) by Jim Lane.</p>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <span>Say hello: <a id="mail" href="#">plinkbit [at] gmail [dot] com</a></span>
+            <span>&copy; 2026 PlinkBit. All rights reserved.</span>
+        </footer>
+    </div>
+
+    <script>
+        // The address is put together here so it is not sitting in the page source for spam harvesters
+        const mail = document.getElementById('mail');
+        const address = ['plinkbit', 'gmail.com'].join(String.fromCharCode(64));
+        mail.textContent = address;
+        mail.href = 'mai' + 'lto:' + address;
+
+        // Light on the card follows the pointer
+        const card = document.getElementById('card');
+        card.addEventListener('pointermove', e => {
+            const r = card.getBoundingClientRect();
+            card.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+            card.style.setProperty('--my', (e.clientY - r.top) + 'px');
+        });
+
+        // Background: bits fall, land somewhere, and leave a ring. Plink.
+        (() => {
+            const canvas = document.getElementById('bits');
+            const ctx = canvas.getContext('2d');
+            const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const COLORS = ['61, 245, 200', '255, 201, 60'];
+            let w = 0, h = 0, bits = [], rings = [];
+
+            const newBit = anywhere => {
+                const depth = 0.35 + Math.random() * 0.65;          // far bits are small, slow and faint
+                return {
+                    x: Math.random() * w,
+                    y: anywhere ? Math.random() * h : -10,
+                    land: h * (0.25 + Math.random() * 0.75),
+                    size: 2 + depth * 4,
+                    speed: 0.25 + depth * 0.9,
+                    alpha: 0.12 + depth * 0.3,
+                    color: COLORS[Math.random() < 0.6 ? 0 : 1],
+                };
+            };
+
+            const resize = () => {
+                const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                w = window.innerWidth;
+                h = window.innerHeight;
+                canvas.width = w * dpr;
+                canvas.height = h * dpr;
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                const count = Math.round(Math.min(70, w * h / 22000));
+                bits = Array.from({ length: count }, () => newBit(true));
+                if (still) draw();
+            };
+
+            const draw = () => {
+                ctx.clearRect(0, 0, w, h);
+                for (const b of bits) {
+                    ctx.fillStyle = `rgba(${b.color}, ${b.alpha})`;
+                    ctx.fillRect(Math.round(b.x), Math.round(b.y), b.size, b.size);
+                }
+                for (const r of rings) {
+                    ctx.strokeStyle = `rgba(${r.color}, ${r.alpha * (1 - r.t)})`;
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.ellipse(r.x, r.y, r.size * (1 + r.t * 5), r.size * (1 + r.t * 5) * 0.36, 0, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+            };
+
+            const step = () => {
+                for (let i = 0; i < bits.length; i++) {
+                    const b = bits[i];
+                    b.y += b.speed;
+                    if (b.y >= b.land) {
+                        rings.push({ x: b.x + b.size / 2, y: b.y + b.size, size: b.size, color: b.color, alpha: b.alpha * 1.6, t: 0 });
+                        bits[i] = newBit(false);
+                    }
+                }
+                for (const r of rings) r.t += 0.012;
+                rings = rings.filter(r => r.t < 1);
+                draw();
+                requestAnimationFrame(step);
+            };
+
+            window.addEventListener('resize', resize);
+            resize();
+            if (!still) requestAnimationFrame(step);
+        })();
+    </script>
+</body>
+</html>
